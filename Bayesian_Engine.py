@@ -100,17 +100,17 @@ with torch.no_grad():
 while True:
 
 	# user input of data points
-	cement 			= input("cement 			(kg/m^3) [100-600]: 	")
-	slag   			= input("slag   			(kg/m^3) [000-400]: 	")
-	ash				= input("ash			(kg/m^3) [000-350]: 	")
-	water 			= input("water			(kg/m^3) [100-300]: 	")
-	sup_plasticizer	= input("super-plasticizer	(kg/m^3) [000-050]: 	")
-	C_Aggre			= input("Coarse-aggregate	(kg/m^3) [500-1300]: 	")
-	F_Aggre			= input("Fine-aggregate		(kg/m^3) [500-1300]: 	")
-	age 			= input("age of sample  		(day(s)) [001-365]: 	")
+	cement 			= input("cement                 (kg/m^3) [100-600]: 	")
+	slag   			= input("slag                   (kg/m^3) [000-400]: 	")
+	ash				= input("ash                    (kg/m^3) [000-350]: 	")
+	water 			= input("water                  (kg/m^3) [100-300]: 	")
+	sup_plasticizer	= input("super-plasticizer      (kg/m^3) [000-050]: 	")
+	c_Aggre			= input("Coarse-aggregate       (kg/m^3) [500-1300]: 	")
+	f_Aggre			= input("Fine-aggregate         (kg/m^3) [500-1300]: 	")
+	age 			= input("age of sample          (day(s)) [001-365]: 	")
 
 	X_response_test = [float(cement), float(slag), float(ash), float(water), 
-					   float(sup_plasticizer), float(C_Aggre), float(F_Aggre), float(age)]
+					   float(sup_plasticizer), float(c_Aggre), float(f_Aggre), float(age)]
 	X_response_test = torch.tensor(X_response_test).float()
 
 	# tune parameters
