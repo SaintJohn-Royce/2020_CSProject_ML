@@ -12,6 +12,10 @@ from blitz.utils import variational_estimator
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 
+# git add Bayesian_Engine.py
+# git commit -m ""
+# git remote add origin https://github.com/SaintJohn-Royce/2020_CSProject_ML.git
+# git push -u origin master
 
 ### DATA MANIPULATION ###
 # access the base dataset
@@ -146,6 +150,4 @@ while True:
 	if test_continuity == "N":
 
 		break
-
-
 
