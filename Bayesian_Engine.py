@@ -98,6 +98,8 @@ with torch.no_grad():
 # in theory, an accurate model will yield an estimation that is same as the 
 # actual target value in the dataset, thus we test a known point
 while True:
+
+	# user input of data points
 	cement 			= input("cement 			(kg/m^3) [100-600]: 	")
 	slag   			= input("slag   			(kg/m^3) [000-400]: 	")
 	ash				= input("ash			(kg/m^3) [000-350]: 	")
