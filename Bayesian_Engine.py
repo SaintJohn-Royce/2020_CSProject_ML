@@ -20,7 +20,8 @@ import wandb
 # git push -u origin master
 
 # WandB documentation
-wandb.init(project="Bayesia_Engine.py")
+wandb.init(project="Bayesian_Engine.py")
+
 
 ### DATA MANIPULATION ###
 # access the base dataset
@@ -30,15 +31,16 @@ dataset = pd.read_csv('./Mel.csv')
 # extract the data out of the CSV file
 X = dataset.iloc[:, 0:8].values
 y = dataset.iloc[:, 8:9].values
-
 # normalizing the data (currently not in use)
 #X = StandardScaler().fit_transform(X)
 #y = StandardScaler().fit_transform(y)
+
 
 # divide the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.25, random_state=42)
 X_train, y_train = torch.tensor(X_train).float(), torch.tensor(y_train).float()
 X_test, y_test = torch.tensor(X_test).float(), torch.tensor(y_test).float()
+
 
 ### NET CONSTRUCTION ####
 @variational_estimator
@@ -58,6 +60,7 @@ class DeepNet(nn.Module):
 
 		return self.blinearOutput(x_2)
 
+
 # standard procedure: determine the architecture, SGD method, and the loss function
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 regressor = DeepNet(8, 1).to(device)
@@ -70,8 +73,9 @@ dataloader_train = torch.utils.data.DataLoader(ds_train, batch_size=1, shuffle=T
 ds_test = torch.utils.data.TensorDataset(X_test, y_test)
 dataloader_test = torch.utils.data.DataLoader(ds_test, batch_size=1, shuffle=True)
 
+
 ### TRAINING PHASE ###
-EPOCHS = 30
+EPOCHS = 31
 for epoch in range(EPOCHS):
 	for data in dataloader_train: 
 
@@ -89,9 +93,12 @@ for epoch in range(EPOCHS):
 		optimizer.step()
 
 	# print out the losses for each iteration (currently not in use)
+	# refer to the WandB data files for a better understanding
 	#print(loss)
 
+	# prints out the data for each iteration
 	wandb.log({'epoch': epoch, 'loss': loss})
+
 
 ### TESTING PHASE ###
 # deactivates the net's ability to be trained: enter testing phase
@@ -103,13 +110,70 @@ with torch.no_grad():
     loss = criterion(test_out, y_test)
     print("========================================================")
     print("testing loss:   ", loss)
-    print("========================================================")
-    print("")
+    wandb.log({'testing loss': loss})
 
-### PERFORMANCE REVIEW ###
+
+# sample parameter (Do not configure)
+samples = 200
+
+
+### ITERATIVE TOOL ###
+# By running iterations, we can calculate the mean and standard deviation of
+# the Gaussian distribution of the posterior
+def regression_test(regressor, X_response_test, samples, std_multiplier):
+
+	# create a list of [regressor(X), ... ... regressor(X)]
+	prediction = [regressor(X_response_test) for i in range(samples)]
+	prediction = torch.stack(prediction)
+
+	# standard Mean, Standard Deviation, and Confidence Interval calculation
+	means = prediction.mean(axis=0)
+	stds = prediction.std(axis=0)
+	ci_upper = means + (std_multiplier * stds)
+	ci_lower = means - (std_multiplier * stds)
+	ci_interval = ci_upper - ci_lower
+
+	return means, stds, ci_upper, ci_lower, ci_interval
+
+
+### AGGREGATE PERFORMANCE REVIEW ###
+# we seek to understand, on the whole system, how the estimated values differ
+# from known values using standard deviation in the process
+def master_testing(regressor, dataset, X, y, samples):
+
+	# find the length of the dataset in totality, as well as refitting the 
+	# original datapoint and target outputs in correct form
+	DimSet = len(dataset)
+	X, y = torch.tensor(X).float(), torch.tensor(y).float()
+
+	# iterate through every entry of the datasheet
+	for entry in range(DimSet):
+
+		# create a Gaussian distribution through every data point
+		prediction = [regressor(X[entry]) for gaussian_iteration in range(samples)]
+		prediction = torch.stack(prediction)
+		means = prediction.mean(axis=0)
+		stds = prediction.std(axis=0)		
+
+		# compare the estimated mean and the target value using standard
+		# deviation. This will prove the effectiveness of the data
+		dev_distance = (means - y[entry]) / stds
+
+		# log data on to WandB
+		wandb.log({'deviation distance:': dev_distance})
+
+### ACTIVATION FUNCTION FOR AGGREGATE PERFORMANCE REVIEW ###
+# note: this should not be exercised frequently (time consuming)
+if True:
+
+	# activate the main function (this will take 10 minutes)
+	master_testing(regressor, dataset, X, y, samples)
+
+
+### INDIV. PERFORMANCE REVIEW ###
 # in theory, an accurate model will yield an estimation that is same as the 
 # actual target value in the dataset, thus we test a known point
-while True:
+def indiv_testing(regressor):
 
 	# user input of data points
 	cement          = input("cement                 (kg/m^3) [100-600]: 	")
@@ -125,34 +189,27 @@ while True:
 					   float(sup_plasticizer), float(c_Aggre), float(f_Aggre), float(age)]
 	X_response_test = torch.tensor(X_response_test).float()
 
-	# tune parameters
-	samples = 100
+	# tune parameter
 	std_multiplier = 2
 
-	# By running iterations, we can calculate the mean and standard deviation of
-	# the Gaussian distribution of the posterior
-	def regression_test(regressor, X_response_test, samples, std_multiplier):
-
-		# create a list of [regressor(X), ... ... regressor(X)]
-		prediction = [regressor(X_response_test) for i in range(samples)]
-		prediction = torch.stack(prediction)
-
-		# standard Mean, Standard Deviation, and Confidence Interval calculation
-		means = prediction.mean(axis=0)
-		stds = prediction.std(axis=0)
-		ci_upper = means + (std_multiplier * stds)
-		ci_lower = means - (std_multiplier * stds)
-		print("mean: 		", means)
-		print("STD: 		", stds)
-		print("upper CL: 	", ci_upper)
-		print("lower CL: 	", ci_lower)
-		return
-
 	# actually running the regression test
-	regression_test(regressor, X_response_test, samples, std_multiplier)
+	means, stds, ci_upper, ci_lower, ci_interval = regression_test(regressor, 
+										X_response_test, samples, std_multiplier)
 
+	print("mean:            ", means)
+	print("STD:             ", stds)
+	print("upper CL:        ", ci_upper)
+	print("lower CL:        ", ci_lower)
+	print("confidence int:  ", ci_interval)
+
+
+### ACTIVATION FUNCTION FOR INDIV. PERFORMANCE REVIEW ###
+# if true, the system allows user inputs
+# if false, the following lines are skipped entirely
+while False:
+
+	indiv_testing(regressor)
 	test_continuity = input("conduct another test? [Y]/[N]: ")
-
 	print("========================================================")
 
 	if test_continuity == "N":
