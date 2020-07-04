@@ -12,10 +12,15 @@ from blitz.utils import variational_estimator
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 
+import wandb
+
 # git add Bayesian_Engine.py
 # git commit -m ""
 # git remote add origin https://github.com/SaintJohn-Royce/2020_CSProject_ML.git
 # git push -u origin master
+
+# WandB documentation
+wandb.init(project="Bayesia_Engine.py")
 
 ### DATA MANIPULATION ###
 # access the base dataset
@@ -86,6 +91,8 @@ for epoch in range(EPOCHS):
 	# print out the losses for each iteration (currently not in use)
 	#print(loss)
 
+	wandb.log({'epoch': epoch, 'loss': loss})
+
 ### TESTING PHASE ###
 # deactivates the net's ability to be trained: enter testing phase
 regressor.eval()
@@ -97,6 +104,7 @@ with torch.no_grad():
     print("========================================================")
     print("testing loss:   ", loss)
     print("========================================================")
+    print("")
 
 ### PERFORMANCE REVIEW ###
 # in theory, an accurate model will yield an estimation that is same as the 
