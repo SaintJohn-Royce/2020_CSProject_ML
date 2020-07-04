@@ -109,8 +109,8 @@ while True:
 	ash             = input("ash                    (kg/m^3) [000-350]: 	")
 	water           = input("water                  (kg/m^3) [100-300]: 	")
 	sup_plasticizer = input("super-plasticizer      (kg/m^3) [000-050]: 	")
-	c_Aggre         = input("Coarse-aggregate       (kg/m^3) [500-1300]: 	")
-	f_Aggre         = input("Fine-aggregate         (kg/m^3) [500-1300]: 	")
+	c_Aggre         = input("coarse-aggregate       (kg/m^3) [500-1300]: 	")
+	f_Aggre         = input("fine-aggregate         (kg/m^3) [500-1300]: 	")
 	age             = input("age of sample          (day(s)) [001-365]: 	")
 
 	X_response_test = [float(cement), float(slag), float(ash), float(water), 
