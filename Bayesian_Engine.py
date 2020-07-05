@@ -19,8 +19,12 @@ import wandb
 # git remote add origin https://github.com/SaintJohn-Royce/2020_CSProject_ML.git
 # git push -u origin master
 
+# activate the WandB tracing procedures
+wandB_control = False
+
 # WandB documentation
-wandb.init(project="Bayesian_Engine.py")
+if wandB_control:
+	wandb.init(project="Bayesian_Engine.py")
 
 
 ### DATA MANIPULATION ###
@@ -42,15 +46,28 @@ X_train, y_train = torch.tensor(X_train).float(), torch.tensor(y_train).float()
 X_test, y_test = torch.tensor(X_test).float(), torch.tensor(y_test).float()
 
 
+hyperparameter_defaults = dict(
+	blayer1 = 128,
+	blayer2 = 32,
+	batch_size = 1,
+	learning_rate = 0.001,
+	EPOCHS = 31)
+
+blayer1 = hyperparameter_defaults["blayer1"]
+blayer2 = hyperparameter_defaults["blayer2"]
+batch_size = hyperparameter_defaults["batch_size"]
+learning_rate = hyperparameter_defaults["learning_rate"]
+EPOCHS = hyperparameter_defaults["EPOCHS"]
+
 ### NET CONSTRUCTION ####
 @variational_estimator
 class DeepNet(nn.Module):
-	def __init__(self, input_dim, output_dim):
+	def __init__(self, input_dim, output_dim, blayer1, blayer2):
 		super().__init__()
 		# Layer one, so on so forth (Bayesian Layer)
-		self.blinear1 = BayesianLinear(input_dim, 128)
-		self.blinear2 = BayesianLinear(128, 32)
-		self.blinearOutput = BayesianLinear(32, output_dim)
+		self.blinear1 = BayesianLinear(input_dim, blayer1)
+		self.blinear2 = BayesianLinear(blayer1, blayer2)
+		self.blinearOutput = BayesianLinear(blayer2, output_dim)
 		
 	def forward(self, x):
 
@@ -63,19 +80,18 @@ class DeepNet(nn.Module):
 
 # standard procedure: determine the architecture, SGD method, and the loss function
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-regressor = DeepNet(8, 1).to(device)
-optimizer = optim.Adam(regressor.parameters(), lr=0.001)
+regressor = DeepNet(8, 1, blayer1, blayer2).to(device)
+optimizer = optim.Adam(regressor.parameters(), learning_rate)
 criterion = torch.nn.MSELoss()
 
 # Training and Testing data subdivision and control.
 ds_train = torch.utils.data.TensorDataset(X_train, y_train)
-dataloader_train = torch.utils.data.DataLoader(ds_train, batch_size=1, shuffle=True)
+dataloader_train = torch.utils.data.DataLoader(ds_train, batch_size, shuffle=True)
 ds_test = torch.utils.data.TensorDataset(X_test, y_test)
-dataloader_test = torch.utils.data.DataLoader(ds_test, batch_size=1, shuffle=True)
+dataloader_test = torch.utils.data.DataLoader(ds_test, batch_size, shuffle=True)
 
 
 ### TRAINING PHASE ###
-EPOCHS = 31
 for epoch in range(EPOCHS):
 	for data in dataloader_train: 
 
@@ -97,7 +113,8 @@ for epoch in range(EPOCHS):
 	#print(loss)
 
 	# prints out the data for each iteration
-	wandb.log({'epoch': epoch, 'loss': loss})
+	if wandB_control:
+		wandb.log({'epoch': epoch, 'loss': loss})
 
 
 ### TESTING PHASE ###
@@ -110,7 +127,9 @@ with torch.no_grad():
     loss = criterion(test_out, y_test)
     print("========================================================")
     print("testing loss:   ", loss)
-    wandb.log({'testing loss': loss})
+    
+    if wandB_control:
+    	wandb.log({'testing loss': loss})
 
 
 # sample parameter (Do not configure)
@@ -160,11 +179,13 @@ def master_testing(regressor, dataset, X, y, samples):
 		dev_distance = (means - y[entry]) / stds
 
 		# log data on to WandB
-		wandb.log({'deviation distance:': dev_distance})
+		if wandB_control:
+			wandb.log({'deviation distance:': dev_distance})
+
 
 ### ACTIVATION FUNCTION FOR AGGREGATE PERFORMANCE REVIEW ###
 # note: this should not be exercised frequently (time consuming)
-if True:
+if False:
 
 	# activate the main function (this will take 10 minutes)
 	master_testing(regressor, dataset, X, y, samples)
