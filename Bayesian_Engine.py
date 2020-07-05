@@ -19,8 +19,12 @@ import wandb
 # git remote add origin https://github.com/SaintJohn-Royce/2020_CSProject_ML.git
 # git push -u origin master
 
-# activate the WandB tracing procedures
+# procedure and module control
 wandB_control = False
+validTest_control = False 		
+mast_Test_control = False
+indivTest_control = True
+
 
 # WandB documentation
 if wandB_control:
@@ -39,25 +43,27 @@ y = dataset.iloc[:, 8:9].values
 #X = StandardScaler().fit_transform(X)
 #y = StandardScaler().fit_transform(y)
 
-
 # divide the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.25, random_state=42)
 X_train, y_train = torch.tensor(X_train).float(), torch.tensor(y_train).float()
 X_test, y_test = torch.tensor(X_test).float(), torch.tensor(y_test).float()
 
 
+### HYPERPARAMETER LISTING ###
 hyperparameter_defaults = dict(
 	blayer1 = 128,
 	blayer2 = 32,
 	batch_size = 1,
 	learning_rate = 0.001,
-	EPOCHS = 31)
+	EPOCHS = 31,
+	samples = 200)
 
 blayer1 = hyperparameter_defaults["blayer1"]
 blayer2 = hyperparameter_defaults["blayer2"]
 batch_size = hyperparameter_defaults["batch_size"]
 learning_rate = hyperparameter_defaults["learning_rate"]
 EPOCHS = hyperparameter_defaults["EPOCHS"]
+samples = hyperparameter_defaults["samples"]
 
 ### NET CONSTRUCTION ####
 @variational_estimator
@@ -92,6 +98,7 @@ dataloader_test = torch.utils.data.DataLoader(ds_test, batch_size, shuffle=True)
 
 
 ### TRAINING PHASE ###
+
 for epoch in range(EPOCHS):
 	for data in dataloader_train: 
 
@@ -117,23 +124,24 @@ for epoch in range(EPOCHS):
 		wandb.log({'epoch': epoch, 'loss': loss})
 
 
-### TESTING PHASE ###
+### VALIDATION PHASE ###
 # deactivates the net's ability to be trained: enter testing phase
-regressor.eval()
-with torch.no_grad():
+def validation(X_test, y_test, regressor):
+	regressor.eval()
+	with torch.no_grad():
 
-	# Same principles apply here
-    test_out = regressor(X_test)
-    loss = criterion(test_out, y_test)
-    print("========================================================")
-    print("testing loss:   ", loss)
-    
-    if wandB_control:
-    	wandb.log({'testing loss': loss})
+		# Same principles apply here
+	    pred = regressor(X_test)
+	    loss = criterion(pred, y_test)
+	    print("========================================================")
+	    print("testing loss:   ", loss)
+	    
+	    if wandB_control:
+	    	wandb.log({'testing loss': loss})
 
-
-# sample parameter (Do not configure)
-samples = 200
+### ACTIVATION FUNCTION FOR VALIDATION COMPARISON ###
+if validTest_control:
+	validation(X_test, y_test, regressor)
 
 
 ### ITERATIVE TOOL ###
@@ -185,7 +193,7 @@ def master_testing(regressor, dataset, X, y, samples):
 
 ### ACTIVATION FUNCTION FOR AGGREGATE PERFORMANCE REVIEW ###
 # note: this should not be exercised frequently (time consuming)
-if False:
+if mast_Test_control:
 
 	# activate the main function (this will take 10 minutes)
 	master_testing(regressor, dataset, X, y, samples)
@@ -227,7 +235,7 @@ def indiv_testing(regressor):
 ### ACTIVATION FUNCTION FOR INDIV. PERFORMANCE REVIEW ###
 # if true, the system allows user inputs
 # if false, the following lines are skipped entirely
-while False:
+while indivTest_control:
 
 	indiv_testing(regressor)
 	test_continuity = input("conduct another test? [Y]/[N]: ")
