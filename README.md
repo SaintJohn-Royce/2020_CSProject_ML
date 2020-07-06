@@ -1,6 +1,12 @@
 # 2020_CSProject_ML
 # Probabilistic Estimation of Material Strength using Machine Learning Methods
 
+for the lads at WandB, the main files of importance are:
+
+1. Bayesian_Engine.py: the main file where training occurs (please make sure that wandB_control = True)
+2. Bayesian_Optimization.yaml: the yaml file that runs the sweeps
+3. Sweep_Error: the error as displayed on the terminal when a WandB Sweep is executed
+
 Concrete's material characteristics depends largely on the anisotropy of its solid components. Without anisotropy, concrete's material behaviour, namely concrete strength, will become unpredictable. As THE foundational material of the modern world, it is essential that concrete strength is controllable in order to put out a stable product. However, anisotropy is a variable that cannot be expressed as a unique class or value; this raises the difficulty of behaviour estimation as key constituents involved in concrete production may need to be ignored.
 
 To combat this, Yeh (1998) utilized a Machine Learning (ML) method to "black box" this process; instead of proposing a model, he would have a machine to directly estimate an outcome from the data, as opposed to utilizing the Frequentist Approach. This was hugely promising as the accuracy he calculated was quite high, roughly standing at 85 to 95%. 
