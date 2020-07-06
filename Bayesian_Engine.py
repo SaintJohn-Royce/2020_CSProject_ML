@@ -19,18 +19,48 @@ import wandb
 # git remote add origin https://github.com/SaintJohn-Royce/2020_CSProject_ML.git
 # git push -u origin master
 
+##################################################################################
+### CONTROL PANEL ###
 # procedure and module control
-wandB_control = False
-validTest_control = False 		
-mast_Test_control = False
-indivTest_control = True
+wandB_control =         True
+validTest_control =     False
+# no serious use without WandB being True
+mast_Test_control =     False
+indivTest_control =     False
 
-
+##################################################################################
+### HYPERPARAMETER LISTING ###
+hyperparameter_defaults = dict(
+	blayer1 = 128,
+	blayer2 = 32,
+	batch_size = 1,
+	learning_rate = 0.001,
+	EPOCHS = 31,
+	samples = 200
+	)
 # WandB documentation
 if wandB_control:
-	wandb.init(project="Bayesian_Engine.py")
+	wandb.init(config = hyperparameter_defaults, project="Bayesian_Engine.py")
+	config = wandb.config
 
+	# the hyperparameters will now be configurable be the yaml file
+	blayer1 = config.blayer1
+	blayer2 = config.blayer2
+	batch_size = config.batch_size
+	learning_rate = config.learning_rate
+	EPOCHS = config.EPOCHS
+	samples = config.samples
 
+if wandB_control != True:
+	# the hyperparameters will not be changed by the yaml file
+	blayer1 = hyperparameter_defaults["blayer1"]
+	blayer2 = hyperparameter_defaults["blayer2"]
+	batch_size = hyperparameter_defaults["batch_size"]
+	learning_rate = hyperparameter_defaults["learning_rate"]
+	EPOCHS = hyperparameter_defaults["EPOCHS"]
+	samples = hyperparameter_defaults["samples"]
+
+##################################################################################
 ### DATA MANIPULATION ###
 # access the base dataset
 dataset = pd.read_csv('./Mel.csv')
@@ -48,28 +78,13 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.25, random_
 X_train, y_train = torch.tensor(X_train).float(), torch.tensor(y_train).float()
 X_test, y_test = torch.tensor(X_test).float(), torch.tensor(y_test).float()
 
-
-### HYPERPARAMETER LISTING ###
-hyperparameter_defaults = dict(
-	blayer1 = 128,
-	blayer2 = 32,
-	batch_size = 1,
-	learning_rate = 0.001,
-	EPOCHS = 31,
-	samples = 200)
-
-blayer1 = hyperparameter_defaults["blayer1"]
-blayer2 = hyperparameter_defaults["blayer2"]
-batch_size = hyperparameter_defaults["batch_size"]
-learning_rate = hyperparameter_defaults["learning_rate"]
-EPOCHS = hyperparameter_defaults["EPOCHS"]
-samples = hyperparameter_defaults["samples"]
-
+##################################################################################
 ### NET CONSTRUCTION ####
 @variational_estimator
 class DeepNet(nn.Module):
 	def __init__(self, input_dim, output_dim, blayer1, blayer2):
 		super().__init__()
+
 		# Layer one, so on so forth (Bayesian Layer)
 		self.blinear1 = BayesianLinear(input_dim, blayer1)
 		self.blinear2 = BayesianLinear(blayer1, blayer2)
@@ -83,7 +98,7 @@ class DeepNet(nn.Module):
 
 		return self.blinearOutput(x_2)
 
-
+##################################################################################
 # standard procedure: determine the architecture, SGD method, and the loss function
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 regressor = DeepNet(8, 1, blayer1, blayer2).to(device)
@@ -96,9 +111,8 @@ dataloader_train = torch.utils.data.DataLoader(ds_train, batch_size, shuffle=Tru
 ds_test = torch.utils.data.TensorDataset(X_test, y_test)
 dataloader_test = torch.utils.data.DataLoader(ds_test, batch_size, shuffle=True)
 
-
+##################################################################################
 ### TRAINING PHASE ###
-
 for epoch in range(EPOCHS):
 	for data in dataloader_train: 
 
@@ -123,7 +137,7 @@ for epoch in range(EPOCHS):
 	if wandB_control:
 		wandb.log({'epoch': epoch, 'loss': loss})
 
-
+##################################################################################
 ### VALIDATION PHASE ###
 # deactivates the net's ability to be trained: enter testing phase
 def validation(X_test, y_test, regressor):
@@ -143,7 +157,7 @@ def validation(X_test, y_test, regressor):
 if validTest_control:
 	validation(X_test, y_test, regressor)
 
-
+##################################################################################
 ### ITERATIVE TOOL ###
 # By running iterations, we can calculate the mean and standard deviation of
 # the Gaussian distribution of the posterior
@@ -162,7 +176,7 @@ def regression_test(regressor, X_response_test, samples, std_multiplier):
 
 	return means, stds, ci_upper, ci_lower, ci_interval
 
-
+##################################################################################
 ### AGGREGATE PERFORMANCE REVIEW ###
 # we seek to understand, on the whole system, how the estimated values differ
 # from known values using standard deviation in the process
@@ -185,12 +199,15 @@ def master_testing(regressor, dataset, X, y, samples):
 		# compare the estimated mean and the target value using standard
 		# deviation. This will prove the effectiveness of the data
 		dev_distance = (means - y[entry]) / stds
+		
+		# NOTE: entry 1 [336, 0, 0, 182, 3, 986, 817, 28] is entry two 
+		#		of the .CSV file. Always remember to plus 1 on the translation
 
 		# log data on to WandB
 		if wandB_control:
-			wandb.log({'deviation distance:': dev_distance})
+			wandb.log({'entry stamp': entry, 'deviation distance:': dev_distance})
 
-
+##################################################################################
 ### ACTIVATION FUNCTION FOR AGGREGATE PERFORMANCE REVIEW ###
 # note: this should not be exercised frequently (time consuming)
 if mast_Test_control:
@@ -198,7 +215,7 @@ if mast_Test_control:
 	# activate the main function (this will take 10 minutes)
 	master_testing(regressor, dataset, X, y, samples)
 
-
+##################################################################################
 ### INDIV. PERFORMANCE REVIEW ###
 # in theory, an accurate model will yield an estimation that is same as the 
 # actual target value in the dataset, thus we test a known point
@@ -218,12 +235,9 @@ def indiv_testing(regressor):
 					   float(sup_plasticizer), float(c_Aggre), float(f_Aggre), float(age)]
 	X_response_test = torch.tensor(X_response_test).float()
 
-	# tune parameter
-	std_multiplier = 2
-
 	# actually running the regression test
 	means, stds, ci_upper, ci_lower, ci_interval = regression_test(regressor, 
-										X_response_test, samples, std_multiplier)
+										X_response_test, samples, std_multiplier = 2)
 
 	print("mean:            ", means)
 	print("STD:             ", stds)
@@ -231,7 +245,7 @@ def indiv_testing(regressor):
 	print("lower CL:        ", ci_lower)
 	print("confidence int:  ", ci_interval)
 
-
+##################################################################################
 ### ACTIVATION FUNCTION FOR INDIV. PERFORMANCE REVIEW ###
 # if true, the system allows user inputs
 # if false, the following lines are skipped entirely
