@@ -1,0 +1,25 @@
+Last login: Tue Jul  7 00:06:23 on ttys000
+victorcross@MacBook-Pro ~ % cd /Users/victorcross/Desktop/Coding/A7
+victorcross@MacBook-Pro A7 % wandb sweep Bayesian_Optimization.yaml
+wandb: Creating sweep from: Bayesian_Optimization.yaml
+wandb: Created sweep with ID: xykgmifx
+wandb: View sweep at: https://app.wandb.ai/saintjohn-royce/A7/sweeps/xykgmifx
+wandb: Run sweep agent with: wandb agent saintjohn-royce/A7/xykgmifx
+victorcross@MacBook-Pro A7 % wandb agent saintjohn-royce/A7/xykgmifx
+
+wandb: Starting wandb agent 🕵️
+2020-07-07 01:04:17,655 - wandb.wandb_agent - INFO - Running runs: []
+2020-07-07 01:04:18,293 - wandb.wandb_agent - INFO - Agent received command: run
+2020-07-07 01:04:18,293 - wandb.wandb_agent - INFO - Agent starting run with config:
+	EPOCHS: 18
+	batch_size: 12
+	blayer1: 358
+	blayer2: 74
+	learning_rate: 0.024483143768749986
+2020-07-07 01:04:18,599 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python /Users/victorcross/Desktop/Coding/A7/Bayesian_Engine.py --EPOCHS=18 --batch_size=12 --blayer1=358 --blayer2=74 --learning_rate=0.024483143768749986
+Traceback (most recent call last):
+  File "/Users/victorcross/Desktop/Coding/A7/Bayesian_Engine.py", line 1, in <module>
+    import torch
+ImportError: No module named torch
+
+(and the code iterates two more runs, and ends with a crash)
