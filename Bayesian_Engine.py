@@ -19,6 +19,8 @@ import wandb
 # git remote add origin https://github.com/SaintJohn-Royce/2020_CSProject_ML.git
 # git push -u origin master
 
+# wandb sweep Bayesian_Optimization.yaml
+
 ##################################################################################
 ### CONTROL PANEL ###
 # procedure and module control
