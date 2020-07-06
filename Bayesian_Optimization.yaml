@@ -1,0 +1,26 @@
+program: /Users/victorcross/Desktop/Coding/A7/Bayesian_Engine.py
+method: bayes
+metric: 
+  name: loss
+  goal: minimize
+parameters:
+  blayer1:
+    min: 16
+    max: 512
+  blayer2:
+    min: 8
+    max: 256
+  batch_size:
+    min: 1
+    max: 25
+  learning_rate:
+    min: 0.00001
+    max: 0.1
+  EPOCHS:
+    min: 10
+    max: 50
+early_terminate:
+  type: hyperband
+  s: 2
+  eta: 3
+  max_iter: 27
