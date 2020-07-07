@@ -25,4 +25,8 @@ Lastly, I must thank Piero Esposito for building the Bayesian Layer (and offerin
 
 https://towardsdatascience.com/blitz-a-bayesian-neural-network-library-for-pytorch-82f9998916c7
 
+I have also utilized WandB in hyperparameter tuning. A report on BNN tuning can be seen below:
+
+https://app.wandb.ai/saintjohn-royce/A7/reports/Optimization-of-Project-2020_CSProject_ML%3A-Bayesian_Engine--VmlldzoxNjE5Mjc
+
 July 1st, 2020
