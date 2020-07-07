@@ -24,7 +24,7 @@ import wandb
 ##################################################################################
 ### CONTROL PANEL ###
 # procedure and module control
-wandB_control =         True
+wandB_control =         False
 validTest_control =     False
 # no serious use without WandB being True
 mast_Test_control =     False
