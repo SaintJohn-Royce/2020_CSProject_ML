@@ -42,6 +42,7 @@ hyperparameter_defaults = dict(
 	)
 # WandB documentation
 if wandB_control:
+	
 	wandb.init(config = hyperparameter_defaults, project="Bayesian_Engine.py")
 	config = wandb.config
 
@@ -54,6 +55,7 @@ if wandB_control:
 	samples = config.samples
 
 if wandB_control != True:
+
 	# the hyperparameters will not be changed by the yaml file
 	blayer1 = hyperparameter_defaults["blayer1"]
 	blayer2 = hyperparameter_defaults["blayer2"]
@@ -83,8 +85,11 @@ X_test, y_test = torch.tensor(X_test).float(), torch.tensor(y_test).float()
 ##################################################################################
 ### NET CONSTRUCTION ####
 @variational_estimator
+
 class DeepNet(nn.Module):
+
 	def __init__(self, input_dim, output_dim, blayer1, blayer2):
+
 		super().__init__()
 
 		# Layer one, so on so forth (Bayesian Layer)
@@ -116,6 +121,7 @@ dataloader_test = torch.utils.data.DataLoader(ds_test, batch_size, shuffle=True)
 ##################################################################################
 ### TRAINING PHASE ###
 for epoch in range(EPOCHS):
+
 	for data in dataloader_train: 
 
 		# Find the value that the net will produce with existing weight and bias configuration
@@ -143,6 +149,7 @@ for epoch in range(EPOCHS):
 ### VALIDATION PHASE ###
 # deactivates the net's ability to be trained: enter testing phase
 def validation(X_test, y_test, regressor):
+
 	regressor.eval()
 	with torch.no_grad():
 
