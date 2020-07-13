@@ -24,21 +24,23 @@ import wandb
 ##################################################################################
 ### CONTROL PANEL ###
 # procedure and module control
-wandB_control =         False
-validTest_control =     False
+wandB_control =         True
+validTest_control =     True
 # no serious use without WandB being True
-mast_Test_control =     False
-indivTest_control =     False
+melb_Test_control =     True
+lond_Test_control = 	True
+indivTest_control =     False 
 
 ##################################################################################
 ### HYPERPARAMETER LISTING ###
 hyperparameter_defaults = dict(
-	blayer1 = 128,
-	blayer2 = 32,
-	batch_size = 1,
-	learning_rate = 0.001,
-	EPOCHS = 31,
-	samples = 200
+	                           # untuned  tuned
+	blayer1 = 128,             # 128      292
+	blayer2 = 32,              # 32       232
+	batch_size = 1,            # 1        1
+	learning_rate = 0.001,     # 0.001    0.0155
+	EPOCHS = 31,               # 31       31
+	samples = 200              # 200      200
 	)
 # WandB documentation
 if wandB_control:
@@ -67,20 +69,24 @@ if wandB_control != True:
 ##################################################################################
 ### DATA MANIPULATION ###
 # access the base dataset
-dataset = pd.read_csv('./Mel.csv')
+datasetMel = pd.read_csv('./Mel.csv')
 
 # some data manipulation:
 # extract the data out of the CSV file
-X = dataset.iloc[:, 0:8].values
-y = dataset.iloc[:, 8:9].values
+mel_X = datasetMel.iloc[:, 0:8].values
+mel_y = datasetMel.iloc[:, 8:9].values
 # normalizing the data (currently not in use)
 #X = StandardScaler().fit_transform(X)
 #y = StandardScaler().fit_transform(y)
 
 # divide the data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.25, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(mel_X, mel_y, test_size=.25, random_state=42)
 X_train, y_train = torch.tensor(X_train).float(), torch.tensor(y_train).float()
 X_test, y_test = torch.tensor(X_test).float(), torch.tensor(y_test).float()
+
+datasetLon = pd.read_csv('./UCL.csv')
+lon_W = datasetLon.iloc[:, 0:8].values
+lon_z = datasetLon.iloc[:, 8:9].values
 
 ##################################################################################
 ### NET CONSTRUCTION ####
@@ -186,43 +192,83 @@ def regression_test(regressor, X_response_test, samples, std_multiplier):
 	return means, stds, ci_upper, ci_lower, ci_interval
 
 ##################################################################################
-### AGGREGATE PERFORMANCE REVIEW ###
+### MELBOURNE AGGREGATE PERFORMANCE REVIEW ###
 # we seek to understand, on the whole system, how the estimated values differ
 # from known values using standard deviation in the process
-def master_testing(regressor, dataset, X, y, samples):
+def melb_master_testing(regressor, datasetMel, mel_X, mel_y, samples):
 
 	# find the length of the dataset in totality, as well as refitting the 
 	# original datapoint and target outputs in correct form
-	DimSet = len(dataset)
-	X, y = torch.tensor(X).float(), torch.tensor(y).float()
+	mel_DimSet = len(datasetMel)
+	mel_X, mel_y = torch.tensor(mel_X).float(), torch.tensor(mel_y).float()
 
 	# iterate through every entry of the datasheet
-	for entry in range(DimSet):
+	for entry in range(mel_DimSet):
 
 		# create a Gaussian distribution through every data point
-		prediction = [regressor(X[entry]) for gaussian_iteration in range(samples)]
+		prediction = [regressor(mel_X[entry]) for gaussian_iteration in range(samples)]
 		prediction = torch.stack(prediction)
 		means = prediction.mean(axis=0)
 		stds = prediction.std(axis=0)		
 
 		# compare the estimated mean and the target value using standard
 		# deviation. This will prove the effectiveness of the data
-		dev_distance = (means - y[entry]) / stds
+		dev_distance_Mel = (means - mel_y[entry]) / stds
 		
 		# NOTE: entry 1 [336, 0, 0, 182, 3, 986, 817, 28] is entry two 
 		#		of the .CSV file. Always remember to plus 1 on the translation
 
 		# log data on to WandB
 		if wandB_control:
-			wandb.log({'entry stamp': entry, 'deviation distance:': dev_distance})
+			wandb.log({'entry stamp': entry, 'Deviation Distance Melbourne:': dev_distance_Mel})
 
 ##################################################################################
 ### ACTIVATION FUNCTION FOR AGGREGATE PERFORMANCE REVIEW ###
 # note: this should not be exercised frequently (time consuming)
-if mast_Test_control:
+if melb_Test_control:
 
 	# activate the main function (this will take 10 minutes)
-	master_testing(regressor, dataset, X, y, samples)
+	melb_master_testing(regressor, datasetMel, mel_X, mel_y, samples)
+
+##################################################################################
+### UCL AGGREGATE PERFORMANCE TEST ###
+# Now that it seems that the machine has completed its training on MEL.csv
+# can this regressor be used on UCL.csv, would the regressor operate with
+# the same loss capacity?
+def lond_master_testing(regressor, datasetLon, lon_W, lon_z, samples):
+
+	# find the length of the dataset in totality, as well as refitting the 
+	# original datapoint and target outputs in correct form
+	lon_DimSet = len(datasetLon)
+	lon_W, lon_z = torch.tensor(lon_W).float(), torch.tensor(lon_z).float()
+
+	# iterate through every entry of the datasheet
+	for entry in range(lon_DimSet):
+
+		# create a Gaussian distribution through every data point
+		prediction = [regressor(lon_W[entry]) for gaussian_iteration in range(samples)]
+		prediction = torch.stack(prediction)
+		means = prediction.mean(axis=0)
+		stds = prediction.std(axis=0)
+
+		# compare the estimated mean and the target value using standard
+		# deviation. This will prove the effectiveness of the data
+		dev_distance_Lon = (means - lon_z[entry]) / stds
+		
+		# NOTE: entry 1 [336, 0, 0, 182, 3, 986, 817, 28] is entry two 
+		#		of the .CSV file. Always remember to plus 1 on the translation
+
+		# log data on to WandB
+		if wandB_control:
+			wandb.log({'entry stamp': entry, 'Deviation Distance London:': dev_distance_Lon})
+
+##################################################################################
+### ACTIVATION FUNCTION FOR AGGREGATE PERFORMANCE REVIEW ###
+# note: this should not be exercised frequently (time consuming)
+if lond_Test_control:
+
+	# activate the main function (this will take 10 minutes)
+	lond_master_testing(regressor, datasetLon, lon_W, lon_z, samples)	
 
 ##################################################################################
 ### INDIV. PERFORMANCE REVIEW ###
