@@ -35,7 +35,7 @@ class DeepNet(nn.Module):
 		# Layer one, so on so forth (linear layer)
 		self.layer1 = nn.Linear(input_dim, 64)
 		self.layer2 = nn.Linear(64, 32)
-		self.layerOutput = nn.Linear(32, 1)
+		self.layerOutput = nn.Linear(32, output_dim)
 	def forward(self, x):
 
 		# installing the activation function (RELU function)
@@ -47,7 +47,7 @@ class DeepNet(nn.Module):
 # standard procedure: determine the architecture, SGD method, and the loss function
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 regressor = DeepNet(8, 1).to(device)
-optimizer = optim.Adam(regressor.parameters(), lr=0.001)
+optimizer = optim.Adam(regressor.parameters(), lr=0.0005)
 criterion = torch.nn.MSELoss()
 
 # Training and Testing data subdivision and control.
@@ -57,7 +57,7 @@ ds_test = torch.utils.data.TensorDataset(X_test, y_test)
 dataloader_test = torch.utils.data.DataLoader(ds_test, batch_size=1, shuffle=True)
 
 ### TRAINING PHASE ###
-EPOCHS = 100
+EPOCHS = 50
 for epoch in range(EPOCHS):
 	for data in dataloader_train:
 
@@ -90,7 +90,7 @@ with torch.no_grad():
 ### PERFORMANCE REVIEW ###
 # in theory, an accurate model will yield an estimation that is same as the 
 # actual target value in the dataset, thus we test a known point
-X_response_test = [218.23, 54.64, 123.78, 140.75, 11.91, 1075.7, 792.67, 56]
+X_response_test = [140, 4.2, 215.9, 194, 4.7, 1050, 710, 28]
 X_response_test = torch.tensor(X_response_test).float()
 test_response = regressor(X_response_test)
 print("test response:", test_response)
